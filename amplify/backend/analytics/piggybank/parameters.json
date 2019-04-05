@@ -1,0 +1,20 @@
+{
+    "appName": "piggybank",
+    "roleName": "pinpointLambdaRoleb72979c9",
+    "cloudWatchPolicyName": "cloudWatchPolicyb72979c9",
+    "pinpointPolicyName": "pinpointPolicyb72979c9",
+    "authPolicyName": "pinpoint_amplify_b72979c9",
+    "unauthPolicyName": "pinpoint_amplify_b72979c9",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    }
+}

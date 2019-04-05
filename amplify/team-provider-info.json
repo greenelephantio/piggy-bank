@@ -1,0 +1,14 @@
+{
+    "NONE": {
+        "awscloudformation": {
+            "AuthRoleName": "piggybank-20190129151237-authRole",
+            "UnauthRoleArn": "arn:aws:iam::394296847239:role/piggybank-20190129151237-unauthRole",
+            "AuthRoleArn": "arn:aws:iam::394296847239:role/piggybank-20190129151237-authRole",
+            "Region": "eu-west-1",
+            "DeploymentBucketName": "piggybank-20190129151237-deployment",
+            "UnauthRoleName": "piggybank-20190129151237-unauthRole",
+            "StackName": "piggybank-20190129151237",
+            "StackId": "arn:aws:cloudformation:eu-west-1:394296847239:stack/piggybank-20190129151237/ee4fcb40-23cf-11e9-8d25-0254d350c81a"
+        }
+    }
+}
