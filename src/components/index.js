@@ -1,5 +1,3 @@
-export { AppNav } from './AppNav';
+export { BankWithAuthenticator } from './Bank';
 export { Balance } from './Balance';
 export { Home } from './Home';
-export { Settings } from './Settings';
-export { PrivateRoute } from './PrivateRoute';

@@ -3,93 +3,92 @@ import ReactDOM from 'react-dom';
 import CookieBanner from 'react-cookie-banner';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
-import { AppNav, Balance, Home, Settings, PrivateRoute } from './components';
+import { BankWithAuthenticator, Balance, Home } from './components';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
-import { isLoggedIn } from './utils/auth-service';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { Auth, Hub } from 'aws-amplify';
+import Analytics from '@aws-amplify/analytics';
+import awsconfig from './aws-exports';
+import { Link } from 'react-router-dom';
 
-const CULTURES = [
-    { culture: 'en-GB', flag: 'gb', language: 'en', voice: 'UK English Female', text: 'English (UK)' },
-    { culture: 'sv-SE', flag: 'se', language: 'sv', voice: 'Swedish Female', text: 'Svenska' },
-    { culture: 'de-DE', flag: 'de', language: 'de', voice: 'Deutsch Female', text: 'Deutsch' }
-];
-
+// retrieve temporary AWS credentials and sign requests
+Auth.configure(awsconfig);
+// send analytics events to Amazon Pinpoint
+Analytics.configure(awsconfig);
 
 class Root extends React.Component {
 
-  texts = {
-      'logIn': {
-          'en': { value: 'Log in' },
-          'sv': { value: 'Logga in' },
-          'de': { value: 'Anmelden' }
-      },
-      'cookieMessage': {
-          'en': { value: 'We use cookies to give you the best possible experience' },
-          'sv': { value: 'Vi använder cookies för att ge dig bästa möjliga upplevelse' },
-          'de': { value: 'Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung zu bieten' }
-      },
-  };
-
-  static getCulture = (culture) => {
-      let matching = CULTURES.filter(x => x.culture === culture);
-      if (matching.length >= 1) {
-          return matching[0];
+  constructor(props) {
+    super(props);
+    this.handleAnalyticsClick = this.handleAnalyticsClick.bind(this);
+    this.state = { analyticsEventSent: false, resultHtml: "", eventsSent: 0, loggedIn: false };
+    Hub.listen('auth', (data) => {
+      switch (data.payload.event) {
+        case 'signIn':
+          console.log('now the user is signed in');
+          this.setState({ loggedIn: true });
+          const user = data.payload.data;
+          break;
+        case 'signIn_failure':
+          console.log('the user failed to sign in');
+          console.log('the error is', data.payload.data);
+          break;
+        default:
+          console.log('something' + JSON.stringify.data.payload);
+          break;
       }
-      return CULTURES[0];
+    });
   }
 
-  state = {
-      culture: Root.getCulture('en-GB')
+  handleAnalyticsClick() {
+    Analytics.record('AWS Amplify Tutorial Event')
+      .then((evt) => {
+        const url = 'https://' + awsconfig.aws_project_region + '.console.aws.amazon.com/pinpoint/home/?region=' + awsconfig.aws_project_region + '#/apps/' + awsconfig.aws_mobile_analytics_app_id + '/analytics/events';
+        let result = (<div>
+          <p>Event Submitted.</p>
+          <p>Events sent: {++this.state.eventsSent}</p>
+          <a href={url} target="_blank">View Events on the Amazon Pinpoint Console</a>
+        </div>);
+        this.setState({
+          'analyticsEventSent': true,
+          'resultHtml': result
+        });
+      });
   }
 
-  changeCulture = (culture) => {
-      this.setState({
-          culture: Root.getCulture(culture)
-      })
-  }
-
-  translate = (textId) => {
-      let text = this.texts[textId];
-      return text[this.state.culture.language].value;
-  }
-
-  isLoggedIn = () => {
-    return false;
-    // return isLoggedIn();
+  logInOut() {
+    Auth.signOut()
+      .then(data => console.log(data))
+      .catch(err => console.log(err));
   }
 
   render() {
-      const {
-          culture
-      } = this.state;
-      return (
-          <div className="">
-              <Router>
-                  <div>
-                      <div></div>
-                      {
-                        isLoggedIn() === false ? (
-                          <AppNav culture={culture} changeCulture={this.changeCulture} eventEmitter={this.api} />
-                        ) : (
-                                ''
-                            )
-                      }
-                      <CookieBanner
-                          message={this.translate('cookieMessage')}
-                          onAccept={() => { }}
-                          cookie="user-has-accepted-cookies" />
-                      <Route exact path="/" component={Home} />
-                      <Route exact path="/balance" component={Balance} />
-                      <PrivateRoute path="/settings" component={Settings} />
-                  </div>
-              </Router>
+    const {
+      culture
+    } = this.state;
+    return (
+      <div className="">
+        <Router>
+          <div>
+            <CookieBanner
+              message="We use cookies to give you the best possible experience"
+              onAccept={() => { }}
+              cookie="user-has-accepted-cookies" />
+            <Link to="/">Home</Link>  <Link to="/balance">Balance</Link>  <Link to="/bank">Bank</Link>
+            <button onClick={() => this.logInOut()}>
+              logout
+            </button>
+            <Route exact path="/" component={Home} />
+            <Route exact path="/balance" component={Balance} />
+            <Route exact path="/bank" component={BankWithAuthenticator} />
           </div>
-      );
+        </Router>
+      </div>
+    );
   }
 }
 
-
 ReactDOM.render(<Root />, document.getElementById('root'));
+
 // // If you want your app to work offline and load faster, you can change
 // // unregister() to register() below. Note this comes with some pitfalls.
 // // Learn more about service workers: http://bit.ly/CRA-PWA
